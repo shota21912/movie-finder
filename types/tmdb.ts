@@ -33,11 +33,22 @@ export interface WatchProviderRegion {
   buy?: WatchProvider[];
 }
 
+export interface Video {
+  id: string;
+  key: string;
+  name: string;
+  site: string; // "YouTube" | "Vimeo" など
+  type: string; // "Trailer" | "Teaser" | "Clip" など
+  official: boolean;
+  published_at: string;
+}
+
 export interface MovieDetail extends MovieSummary {
   runtime: number | null;
   genres: Genre[];
   credits?: { cast: CastMember[] };
   "watch/providers"?: { results: Record<string, WatchProviderRegion> };
+  videos?: { results: Video[] };
 }
 
 export interface PersonSummary {

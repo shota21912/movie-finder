@@ -2,9 +2,20 @@ import Image from "next/image";
 import Link from "next/link";
 import { CURATED_PROVIDER_NAMES } from "@/lib/providers";
 import { getMovieDetail, tmdbImageUrl } from "@/lib/tmdb";
+import type { Video } from "@/types/tmdb";
 
 interface MoviePageProps {
   params: Promise<{ id: string }>;
+}
+
+function pickTrailer(videos?: Video[]): Video | undefined {
+  const youtubeVideos = (videos ?? []).filter((v) => v.site === "YouTube");
+  return (
+    youtubeVideos.find((v) => v.type === "Trailer" && v.official) ??
+    youtubeVideos.find((v) => v.type === "Trailer") ??
+    youtubeVideos.find((v) => v.type === "Teaser") ??
+    youtubeVideos[0]
+  );
 }
 
 export default async function MoviePage({ params }: MoviePageProps) {
@@ -18,6 +29,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
   const flatrateNames = new Set(
     (jpProviders?.flatrate ?? []).map((p) => p.provider_name)
   );
+  const trailer = pickTrailer(movie.videos?.results);
 
   return (
     <div className="flex flex-col gap-8 md:flex-row">
@@ -65,6 +77,21 @@ export default async function MoviePage({ params }: MoviePageProps) {
             {movie.overview || "あらすじ情報がありません"}
           </p>
         </section>
+
+        {trailer && (
+          <section>
+            <h2 className="mb-2 text-lg font-semibold">予告編</h2>
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+              <iframe
+                src={`https://www.youtube.com/embed/${trailer.key}`}
+                title={trailer.name}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full"
+              />
+            </div>
+          </section>
+        )}
 
         {cast.length > 0 && (
           <section>
