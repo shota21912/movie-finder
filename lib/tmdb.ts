@@ -130,7 +130,7 @@ export async function discoverMovies(
 
 export async function getMovieDetail(id: number): Promise<MovieDetail> {
   return tmdbFetch<MovieDetail>(`/movie/${id}`, {
-    append_to_response: "credits,watch/providers,videos",
+    append_to_response: "credits,watch/providers,videos,recommendations",
     // videosはlanguage=ja-JPだけだと空になりがちなので、日本語+英語の動画も対象にする
     include_video_language: "ja,en",
   });

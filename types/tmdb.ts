@@ -49,6 +49,7 @@ export interface MovieDetail extends MovieSummary {
   credits?: { cast: CastMember[] };
   "watch/providers"?: { results: Record<string, WatchProviderRegion> };
   videos?: { results: Video[] };
+  recommendations?: { results: MovieSummary[] };
 }
 
 export interface PersonSummary {
