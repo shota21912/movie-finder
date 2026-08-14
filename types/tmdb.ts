@@ -1,0 +1,71 @@
+export interface Genre {
+  id: number;
+  name: string;
+}
+
+export interface MovieSummary {
+  id: number;
+  title: string;
+  poster_path: string | null;
+  release_date: string;
+  genre_ids: number[];
+  vote_average: number;
+  overview: string;
+}
+
+export interface CastMember {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+}
+
+export interface WatchProvider {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string;
+}
+
+export interface WatchProviderRegion {
+  link?: string;
+  flatrate?: WatchProvider[];
+  rent?: WatchProvider[];
+  buy?: WatchProvider[];
+}
+
+export interface MovieDetail extends MovieSummary {
+  runtime: number | null;
+  genres: Genre[];
+  credits?: { cast: CastMember[] };
+  "watch/providers"?: { results: Record<string, WatchProviderRegion> };
+}
+
+export interface PersonSummary {
+  id: number;
+  name: string;
+  profile_path: string | null;
+  known_for_department: string;
+}
+
+export interface PersonDetail extends PersonSummary {
+  biography: string;
+  birthday: string | null;
+  place_of_birth: string | null;
+}
+
+export interface PersonMovieCredit extends MovieSummary {
+  character: string;
+}
+
+export interface PaginatedResponse<T> {
+  page: number;
+  results: T[];
+  total_pages: number;
+  total_results: number;
+}
+
+export interface ProviderListItem {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string;
+}
