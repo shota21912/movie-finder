@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Movie Finder 🎬
 
-## Getting Started
+タイトル・俳優・ジャンルはもちろん、「今日の気分」や「契約しているサブスク」からも見たい映画を探せる映画情報サイトです。
 
-First, run the development server:
+## 主な機能
+
+- 🎬 人気映画一覧
+- 🔍 映画タイトル / 俳優名での検索
+- 🎞️ ジャンルからの検索
+- 😊 気分（泣きたい・笑いたい・怖い映画が見たい…）から映画を探す
+- 📺 Netflix / Amazon Prime Video などサブスクごとに視聴可能な映画を検索
+- 🎭 映画詳細ページ（あらすじ・キャスト・評価・配信状況）
+- 🧑 俳優詳細ページ（プロフィール・出演作品）
+
+## 技術スタック
+
+- [Next.js](https://nextjs.org)（App Router）
+- TypeScript
+- Tailwind CSS
+- データソース: [TMDb API](https://www.themoviedb.org/documentation/api)
+
+## セットアップ
+
+### 1. 依存パッケージのインストール
+
+```bash
+npm install
+```
+
+### 2. TMDb APIキーの取得
+
+1. [TMDb](https://www.themoviedb.org/) でアカウントを作成
+2. 設定 > API から「開発者」申請をしてAPIキー(v3 auth)を発行
+
+### 3. 環境変数の設定
+
+`.env.local.example` をコピーして `.env.local` を作成し、取得したAPIキーを設定します。
+
+```bash
+cp .env.local.example .env.local
+```
+
+```
+TMDB_API_KEY=取得したAPIキー
+```
+
+### 4. 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[http://localhost:3000](http://localhost:3000) をブラウザで開くと確認できます。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ディレクトリ構成
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/            各ページ（トップ・検索・気分・サブスク・ジャンル・映画詳細・俳優詳細）
+components/     UIコンポーネント（MovieCard, MovieGrid, SearchBar, Paginationなど）
+lib/            TMDb APIクライアント (tmdb.ts) と気分→ジャンル対応表 (moodMap.ts)
+types/          TMDbレスポンスの型定義
+```
 
-## Learn More
+## クレジット
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This product uses the TMDB API but is not endorsed or certified by TMDB.
