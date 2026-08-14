@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import MovieGrid from "@/components/MovieGrid";
+import ReviewCard from "@/components/ReviewCard";
 import { CURATED_PROVIDER_NAMES } from "@/lib/providers";
-import { getGenres, getMovieDetail, tmdbImageUrl } from "@/lib/tmdb";
+import { getGenres, getMovieDetail, getMovieReviews, tmdbImageUrl } from "@/lib/tmdb";
 import type { Video } from "@/types/tmdb";
 
 interface MoviePageProps {
@@ -21,9 +22,10 @@ function pickTrailer(videos?: Video[]): Video | undefined {
 
 export default async function MoviePage({ params }: MoviePageProps) {
   const { id } = await params;
-  const [movie, genres] = await Promise.all([
+  const [movie, genres, reviewsData] = await Promise.all([
     getMovieDetail(Number(id)),
     getGenres(),
+    getMovieReviews(Number(id)),
   ]);
 
   const posterUrl = tmdbImageUrl(movie.poster_path, "w500");
@@ -35,6 +37,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
   );
   const trailer = pickTrailer(movie.videos?.results);
   const recommendations = movie.recommendations?.results ?? [];
+  const reviews = reviewsData.results;
 
   return (
     <div className="flex flex-col gap-10">
@@ -144,9 +147,30 @@ export default async function MoviePage({ params }: MoviePageProps) {
                 </li>
               ))}
             </ul>
+            {jpProviders?.link && (
+              <a
+                href={jpProviders.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-xs text-blue-600 hover:underline dark:text-blue-400"
+              >
+                配信ページで字幕/吹き替えの有無を確認する →
+              </a>
+            )}
           </section>
         </div>
       </div>
+
+      {reviews.length > 0 && (
+        <section>
+          <h2 className="mb-4 text-lg font-semibold">口コミ</h2>
+          <div className="flex flex-col gap-3">
+            {reviews.slice(0, 10).map((review) => (
+              <ReviewCard key={review.id} review={review} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {recommendations.length > 0 && (
         <section>

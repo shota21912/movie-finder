@@ -43,6 +43,19 @@ export interface Video {
   published_at: string;
 }
 
+export interface Review {
+  id: string;
+  author: string;
+  author_details: {
+    name: string;
+    username: string;
+    rating: number | null;
+  };
+  content: string;
+  created_at: string;
+  url: string;
+}
+
 export interface MovieDetail extends MovieSummary {
   runtime: number | null;
   genres: Genre[];

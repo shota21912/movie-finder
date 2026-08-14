@@ -7,6 +7,7 @@ import type {
   PersonMovieCredit,
   PersonSummary,
   ProviderListItem,
+  Review,
 } from "@/types/tmdb";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -133,6 +134,15 @@ export async function getMovieDetail(id: number): Promise<MovieDetail> {
     append_to_response: "credits,watch/providers,videos,recommendations",
     // videosはlanguage=ja-JPだけだと空になりがちなので、日本語+英語の動画も対象にする
     include_video_language: "ja,en",
+  });
+}
+
+export async function getMovieReviews(
+  id: number
+): Promise<PaginatedResponse<Review>> {
+  // reviewsはほぼ英語のみで、language=ja-JPだと0件になるためen-USで取得する
+  return tmdbFetch<PaginatedResponse<Review>>(`/movie/${id}/reviews`, {
+    language: "en-US",
   });
 }
 
