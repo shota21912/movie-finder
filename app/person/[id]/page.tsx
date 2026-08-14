@@ -7,14 +7,17 @@ import {
   tmdbImageUrl,
 } from "@/lib/tmdb";
 
+// /person/{id} に対応する、俳優1人分の詳細ページ。
+
 interface PersonPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>; // [id] = TMDbの人物ID
 }
 
 export default async function PersonPage({ params }: PersonPageProps) {
   const { id } = await params;
   const personId = Number(id);
 
+  // プロフィール・出演作品一覧・ジャンル名解決用の一覧を同時に取得
   const [person, credits, genres] = await Promise.all([
     getPersonDetail(personId),
     getPersonMovieCredits(personId),
@@ -22,6 +25,10 @@ export default async function PersonPage({ params }: PersonPageProps) {
   ]);
 
   const photoUrl = tmdbImageUrl(person.profile_path, "w342");
+  // TMDbから返ってくる出演作品の並び順はバラバラなので、公開日が新しい順に並び替えている。
+  // [...credits.cast] は配列をコピーしてからsortしている(元の配列を直接書き換えないため)。
+  // sortの比較関数は「マイナスを返すとa,bの順のまま、プラスを返すとb,aの順に入れ替える」という
+  // 決まりなので、b.localeCompare(a) と逆にすることで新しい日付が先に来るようにしている。
   const movies = [...credits.cast].sort((a, b) =>
     (b.release_date ?? "").localeCompare(a.release_date ?? "")
   );
@@ -44,6 +51,8 @@ export default async function PersonPage({ params }: PersonPageProps) {
         </div>
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-bold">{person.name}</h1>
+          {/* 生年月日・出身地・経歴はTMDbにデータが無い人物もいるので、
+              あるものだけを表示する(&&は左がtrueの時だけ右を表示するReactの定番パターン) */}
           {person.birthday && (
             <p className="text-sm text-zinc-500">生年月日: {person.birthday}</p>
           )}

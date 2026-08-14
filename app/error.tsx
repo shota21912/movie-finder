@@ -1,7 +1,14 @@
 "use client";
 
+// app/error.tsx もNext.jsが特別扱いするファイル名。
+// このファイルの下(app/以下のどこか)でエラーが投げられると(例: lib/tmdb.tsのtmdbFetchで
+// TMDB_API_KEYが無い時やAPIエラーの時)、通常のページの代わりに自動的にこの画面が表示される。
+// 「再試行」ボタンを押した時に画面を作り直す必要があるので、クライアントコンポーネント
+// ("use client")として作る決まりになっている。
 export default function Error({
   error,
+  // resetはNext.jsが用意してくれる関数。呼び出すと、エラーになった部分を
+  // もう一度読み込み直そうとしてくれる(ページ全体をリロードするわけではない)。
   reset,
 }: {
   error: Error & { digest?: string };
