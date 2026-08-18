@@ -168,6 +168,7 @@ export interface DiscoverMovieParams {
 export async function discoverMovies(
   params: DiscoverMovieParams
 ): Promise<PaginatedResponse<MovieSummary>> {
+  const sortBy = params.sortBy ?? "popularity.desc";
   return tmdbFetch<PaginatedResponse<MovieSummary>>("/discover/movie", {
     page: params.page ?? 1,
     with_genres: params.withGenres,
@@ -179,7 +180,11 @@ export async function discoverMovies(
     watch_region: params.withWatchProviders ? WATCH_REGION : undefined,
     "primary_release_date.gte": params.primaryReleaseDateGte,
     "with_runtime.lte": params.withRuntimeLte,
-    sort_by: params.sortBy ?? "popularity.desc",
+    sort_by: sortBy,
+    // 「口コミ評価が高い順」で並べる時、投票数が少ない作品(例: 1人だけが10点を付けた作品)が
+    // 統計的にたまたま上位に来てしまうことがある。それを防ぐため、評価順ソートの時だけ
+    // 「最低100票以上入っている作品」という下限を設ける(TMDb公式でも推奨されているやり方)。
+    "vote_count.gte": sortBy.startsWith("vote_average") ? 100 : undefined,
   });
 }
 

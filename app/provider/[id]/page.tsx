@@ -1,10 +1,11 @@
 import MovieGrid from "@/components/MovieGrid";
 import Pagination from "@/components/Pagination";
 import { getMoodOption, MOOD_OPTIONS } from "@/lib/moodMap";
+import { SORT_OPTIONS } from "@/lib/sortOptions";
 import { discoverMovies, getGenres } from "@/lib/tmdb";
 
 // /provider/{配信サービスID} に対応するページ(例: /provider/8 は Netflix)。
-// 「サブスクから探す」機能に加えて、気分・ジャンルによる絞り込みフォームも付けている。
+// 「サブスクから探す」機能に加えて、気分・ジャンル・並び替えによる絞り込みフォームも付けている。
 
 interface ProviderPageProps {
   params: Promise<{ id: string }>; // [id] = 配信サービスのID(TMDbのprovider_id)
@@ -12,6 +13,7 @@ interface ProviderPageProps {
     name?: string; // サービス名(トップページから渡ってくる。見出し表示用)
     mood?: string; // 絞り込みフォームで選んだ気分のkey
     genre?: string; // 絞り込みフォームで選んだジャンルID
+    sort?: string; // 絞り込みフォームで選んだ並び順
     page?: string;
   }>;
 }
@@ -21,7 +23,7 @@ export default async function ProviderPage({
   searchParams,
 }: ProviderPageProps) {
   const { id } = await params;
-  const { name, mood, genre, page = "1" } = await searchParams;
+  const { name, mood, genre, sort, page = "1" } = await searchParams;
   const currentPage = Number(page) || 1;
   // moodが指定されていれば、lib/moodMap.tsの対応表からMoodOption(ジャンルIDなど)を取得する
   const moodOption = mood ? getMoodOption(mood) : undefined;
@@ -30,12 +32,15 @@ export default async function ProviderPage({
   // (例: 気分=泣きたい かつ ジャンル指定なし → 気分に紐づくドラマジャンルで絞り込み
   //      気分=泣きたい かつ ジャンル=コメディ → ユーザーが明示的に選んだコメディを優先)
   const withGenres = genre ? genre : moodOption?.genreIds.join(",");
+  // 並び順も同じ考え方: ユーザーが明示的に選んでいればそちらを優先し、
+  // 選んでいなければ気分に紐づくおすすめの並び順(あれば)を使う
+  const sortBy = sort ?? moodOption?.sortBy;
 
   const [movies, genres] = await Promise.all([
     discoverMovies({
       withWatchProviders: id, // このサービスで配信されている映画に絞る
       withGenres,
-      sortBy: moodOption?.sortBy, // 気分によっては「評価が高い順」などに並び替える
+      sortBy,
       page: currentPage,
     }),
     getGenres(), // 絞り込みフォームのジャンル選択肢、及びカードのジャンル名表示に使う
@@ -48,7 +53,7 @@ export default async function ProviderPage({
       <h1 className="text-xl font-bold">{title}で見られる映画</h1>
 
       {/* 絞り込みフォーム。SearchBarと同じ考え方で、素のHTMLフォーム(GET送信)だけで
-          実装している。送信すると /provider/{id}?mood=xxx&genre=yyy のようなURLに
+          実装している。送信すると /provider/{id}?mood=xxx&genre=yyy&sort=zzz のようなURLに
           遷移し、そのクエリパラメータをこのページ自身が上のロジックで読み取る。 */}
       <form
         action={`/provider/${id}`}
@@ -91,6 +96,21 @@ export default async function ProviderPage({
           </select>
         </label>
 
+        <label className="flex flex-col gap-1">
+          並び替え
+          <select
+            name="sort"
+            defaultValue={sort ?? SORT_OPTIONS[0].value}
+            className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <button
           type="submit"
           className="rounded bg-black px-4 py-1.5 text-white dark:bg-white dark:text-black"
@@ -100,13 +120,13 @@ export default async function ProviderPage({
       </form>
 
       <MovieGrid movies={movies.results} genres={genres} />
-      {/* ページ送りしても mood・genre・サービス名の条件が消えないように、
+      {/* ページ送りしても mood・genre・sort・サービス名の条件が消えないように、
           Paginationにも同じ検索条件を渡している */}
       <Pagination
         currentPage={currentPage}
         totalPages={movies.total_pages}
         basePath={`/provider/${id}`}
-        searchParams={{ name: title, mood, genre }}
+        searchParams={{ name: title, mood, genre, sort }}
       />
     </div>
   );

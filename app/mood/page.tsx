@@ -2,6 +2,7 @@ import Link from "next/link";
 import MovieGrid from "@/components/MovieGrid";
 import Pagination from "@/components/Pagination";
 import { getMoodOption, MOOD_OPTIONS } from "@/lib/moodMap";
+import { SORT_OPTIONS } from "@/lib/sortOptions";
 import { discoverMovies, getGenres } from "@/lib/tmdb";
 
 // /mood に対応するページ。このサイトの目玉機能「気分から探す」の本体。
@@ -17,6 +18,7 @@ interface MoodPageProps {
     genre?: string; // 絞り込みフォームで選んだジャンルID(気分のおすすめより優先)
     runtime?: string; // 絞り込みフォームで選んだ上映時間の上限(分)
     year?: string; // 絞り込みフォームで選んだ「この年以降」
+    sort?: string; // 絞り込みフォームで選んだ並び順(気分ごとのおすすめより優先)
     page?: string;
   }>;
 }
@@ -39,7 +41,7 @@ const YEAR_OPTIONS = [
 ];
 
 export default async function MoodPage({ searchParams }: MoodPageProps) {
-  const { mood, genre, runtime, year, page = "1" } = await searchParams;
+  const { mood, genre, runtime, year, sort, page = "1" } = await searchParams;
   const currentPage = Number(page) || 1;
   const moodOption = mood ? getMoodOption(mood) : undefined;
 
@@ -71,6 +73,9 @@ export default async function MoodPage({ searchParams }: MoodPageProps) {
   // 絞り込みフォームでジャンルを明示的に選んでいればそちらを、
   // 選んでいなければ気分に対応する「おすすめジャンル」を使う。
   const withGenres = genre ? genre : moodOption.genreIds.join(",");
+  // 並び順も同じ考え方: ユーザーが明示的に選んでいればそちらを、
+  // 選んでいなければ気分ごとのおすすめの並び順(設定されていれば)を使う。
+  const sortBy = sort ?? moodOption.sortBy;
 
   const movies = await discoverMovies({
     withGenres,
@@ -78,7 +83,7 @@ export default async function MoodPage({ searchParams }: MoodPageProps) {
     withRuntimeLte: runtime ? Number(runtime) : undefined,
     // yearは"2020"のような年だけの文字列なので、TMDbが求める日付形式(YYYY-MM-DD)に変換
     primaryReleaseDateGte: year ? `${year}-01-01` : undefined,
-    sortBy: moodOption.sortBy,
+    sortBy,
     page: currentPage,
   });
 
@@ -150,6 +155,21 @@ export default async function MoodPage({ searchParams }: MoodPageProps) {
           </select>
         </label>
 
+        <label className="flex flex-col gap-1">
+          並び替え
+          <select
+            name="sort"
+            defaultValue={sort ?? moodOption.sortBy ?? SORT_OPTIONS[0].value}
+            className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <button
           type="submit"
           className="rounded bg-black px-4 py-1.5 text-white dark:bg-white dark:text-black"
@@ -159,13 +179,13 @@ export default async function MoodPage({ searchParams }: MoodPageProps) {
       </form>
 
       <MovieGrid movies={movies.results} genres={genres} />
-      {/* ページ送りしても mood・genre・runtime・year の条件が消えないように、
+      {/* ページ送りしても mood・genre・runtime・year・sort の条件が消えないように、
           今の検索条件を全部Paginationに渡している */}
       <Pagination
         currentPage={currentPage}
         totalPages={movies.total_pages}
         basePath="/mood"
-        searchParams={{ mood, genre, runtime, year }}
+        searchParams={{ mood, genre, runtime, year, sort }}
       />
     </div>
   );
