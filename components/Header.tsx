@@ -20,6 +20,9 @@ export default function Header() {
             <Link href="/gacha" className="hover:text-black dark:hover:text-white">
               映画ガチャ
             </Link>
+            <Link href="/awards" className="hover:text-black dark:hover:text-white">
+              受賞作品
+            </Link>
             <Link href="/mylist" className="hover:text-black dark:hover:text-white">
               マイリスト
             </Link>

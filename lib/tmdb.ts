@@ -188,6 +188,21 @@ export async function discoverMovies(
   });
 }
 
+// IMDb ID(例: "tt6751668")から、対応するTMDbの映画情報を検索する。
+// 「受賞作品を探す」機能で、Wikidataから取得したIMDb IDをTMDbの映画データに
+// 変換するために使う(lib/wikidata.tsのコメント参照)。
+// 見つからなかった場合(TMDbにまだ登録されていない作品など)はnullを返す。
+export async function findMovieByImdbId(imdbId: string): Promise<MovieSummary | null> {
+  const data = await tmdbFetch<{ movie_results: MovieSummary[] }>(
+    `/find/${imdbId}`,
+    { external_source: "imdb_id" },
+    // IMDb ID と TMDbの映画がどう対応するかはまず変わらないデータなので、
+    // 1週間(604800秒)という長めのキャッシュ時間にしている。
+    604800
+  );
+  return data.movie_results[0] ?? null;
+}
+
 // 映画1本の詳細情報をまとめて取得する。
 // append_to_response を使うと、本来は別々のAPIリクエストが必要な
 // 「キャスト情報」「配信サービス情報」「予告編動画」「関連映画」を1回のリクエストで
