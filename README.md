@@ -1,6 +1,6 @@
 # Movie Finder 🎬
 
-タイトル・俳優・ジャンルはもちろん、「今日の気分」や「契約しているサブスク」からも見たい映画を探せる映画情報サイトです。
+タイトル・俳優・ジャンルはもちろん、「今日の気分」「契約しているサブスク」「受賞歴」からも見たい映画を探せる映画情報サイトです。ランダムに1本を引く「映画ガチャ」もあります。
 
 🔗 **公開URL**: https://movie-phi-taupe.vercel.app/
 
@@ -8,10 +8,14 @@
 
 - 🎬 人気映画一覧
 - 🔍 映画タイトル / 俳優名での検索
-- 🎞️ ジャンルからの検索
-- 😊 気分（泣きたい・笑いたい・怖い映画が見たい…）から映画を探す
-- 📺 Netflix / Amazon Prime Video などサブスクごとに視聴可能な映画を検索
-- 🎭 映画詳細ページ（あらすじ・キャスト・評価・配信状況）
+- 🎞️ ジャンルからの検索（人気順・口コミ評価順・興行収入順で並び替え可）
+- 😊 気分（泣きたい・笑いたい・怖い映画が見たい…）から映画を探す（ジャンル・上映時間・公開年・並び順の絞り込み付き）
+- 📺 Netflix / Amazon Prime Video などサブスクごとに視聴可能な映画を検索（気分・ジャンル・並び順の絞り込み付き）
+- 🎰 映画ガチャ（サブスク＋任意でジャンル/気分を選び、条件に合う映画をランダムに1本抽選）
+- 🏆 受賞作品を探す（アカデミー賞・カンヌ・ベルリン・ヴェネツィア・BAFTA・日本アカデミー賞・トロント国際映画祭。部門別、受賞/ノミネート切り替え、年代絞り込み対応）
+- 🎭 映画詳細ページ（あらすじ・予告編・キャスト・評価・配信状況・関連映画・口コミ）
+- 💬 口コミの日本語訳（ボタン一つでページ内翻訳）
+- 🔖 「後で見る」「観た映画」リスト（ブラウザに保存、マイリストページで一覧表示）
 - 🧑 俳優詳細ページ（プロフィール・出演作品）
 
 ## 技術スタック
@@ -19,7 +23,9 @@
 - [Next.js](https://nextjs.org)（App Router）
 - TypeScript
 - Tailwind CSS
-- データソース: [TMDb API](https://www.themoviedb.org/documentation/api)
+- データソース:
+  - [TMDb API](https://www.themoviedb.org/documentation/api) — 映画情報・配信サービス・口コミ・予告編など
+  - [Wikidata](https://www.wikidata.org/) — 映画賞の受賞/ノミネートデータ（TMDbには無いため）
 
 ## セットアップ
 
@@ -57,12 +63,35 @@ npm run dev
 ## ディレクトリ構成
 
 ```
-app/            各ページ（トップ・検索・気分・サブスク・ジャンル・映画詳細・俳優詳細）
-components/     UIコンポーネント（MovieCard, MovieGrid, SearchBar, Paginationなど）
-lib/            TMDb APIクライアント (tmdb.ts) と気分→ジャンル対応表 (moodMap.ts)
+app/            各ページ
+  page.tsx              トップページ
+  search/                タイトル・俳優検索
+  genre/[id]/            ジャンル検索結果
+  mood/                  気分から探す
+  provider/[id]/         サブスクから探す
+  gacha/                 映画ガチャ
+  awards/                受賞作品を探す
+  movie/[id]/            映画詳細
+  person/[id]/           俳優詳細
+  mylist/                後で見る/観た映画リスト
+  api/translate/         口コミ翻訳用のAPI Route
+
+components/     UIコンポーネント（MovieCard, MovieGrid, SearchBar, Pagination, ReviewCard, MovieListButtonsなど）
+hooks/          「後で見る/観た映画」リスト用のReactフック (useMovieList.ts)
+lib/            外部APIクライアントと各種対応表
+  tmdb.ts               TMDb APIクライアント
+  wikidata.ts           Wikidata(SPARQL)クライアント(受賞データ取得用)
+  moodMap.ts            気分→ジャンルの対応表
+  awards.ts             映画祭/部門の一覧(WikidataのQID)
+  sortOptions.ts         並び替えの選択肢
+  providers.ts           トップページ等に表示する主要サブスクの一覧
+  movieList.ts            「後で見る/観た映画」のlocalStorage読み書き
+
 types/          TMDbレスポンスの型定義
 ```
 
 ## クレジット
 
 This product uses the TMDB API but is not endorsed or certified by TMDB.
+
+受賞作品データの一部は [Wikidata](https://www.wikidata.org/) から取得しています。
