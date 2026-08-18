@@ -3,6 +3,7 @@ import Link from "next/link";
 import MovieGrid from "@/components/MovieGrid";
 import MovieListButtons from "@/components/MovieListButtons";
 import ReviewCard from "@/components/ReviewCard";
+import { getProviderSearchUrl } from "@/lib/providerLinks";
 import { CURATED_PROVIDER_NAMES } from "@/lib/providers";
 import {
   getGenres,
@@ -192,16 +193,29 @@ export default async function MoviePage({ params }: MoviePageProps) {
             <ul className="flex flex-col gap-1 text-sm">
               {/* 主要サービス名(CURATED_PROVIDER_NAMES)を1つずつ、
                   「このサービスの見放題ラインナップに含まれているか」を○×で表示する。
-                  サービス名自体は、そのサービスの一覧ページ(/provider/[id])へのリンクにもなっている
-                  (○×どちらでも押せる。×の作品でも「他に何があるか」を見に行けるようにするため)。 */}
+                  ○(観られる)の場合は、そのサービス公式サイトでこの映画を検索した状態の
+                  ページに外部リンクする(getProviderSearchUrl。詳しくはlib/providerLinks.ts参照)。
+                  ×(観られない)の場合は、代わりにこのサイト内の一覧ページ(/provider/[id])に
+                  リンクして、「このサービスなら他に何が観られるか」を探せるようにしている。 */}
               {CURATED_PROVIDER_NAMES.map((name) => {
                 const providerId = providerIdByName.get(name);
+                const isAvailable = flatrateNames.has(name);
+                const searchUrl = isAvailable ? getProviderSearchUrl(name, movie.title) : undefined;
                 return (
                   <li
                     key={name}
                     className="flex items-center justify-between border-b border-black/5 py-1 dark:border-white/10"
                   >
-                    {providerId ? (
+                    {searchUrl ? (
+                      <a
+                        href={searchUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline"
+                      >
+                        {name}
+                      </a>
+                    ) : providerId ? (
                       <Link
                         href={`/provider/${providerId}?name=${encodeURIComponent(name)}`}
                         className="hover:underline"
@@ -211,7 +225,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
                     ) : (
                       <span>{name}</span>
                     )}
-                    <span>{flatrateNames.has(name) ? "○" : "×"}</span>
+                    <span>{isAvailable ? "○" : "×"}</span>
                   </li>
                 );
               })}
