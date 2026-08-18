@@ -17,6 +17,9 @@ export default function Header() {
             <Link href="/mood" className="hover:text-black dark:hover:text-white">
               気分から探す
             </Link>
+            <Link href="/gacha" className="hover:text-black dark:hover:text-white">
+              映画ガチャ
+            </Link>
             <Link href="/mylist" className="hover:text-black dark:hover:text-white">
               マイリスト
             </Link>
