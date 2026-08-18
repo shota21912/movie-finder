@@ -1,28 +1,32 @@
 import Link from "next/link";
 import MovieGrid from "@/components/MovieGrid";
-import { AWARD_OPTIONS, ERA_OPTIONS, getAwardOption } from "@/lib/awards";
+import { AWARD_SHOWS, ERA_OPTIONS, getAwardOption, STATUS_OPTIONS } from "@/lib/awards";
 import { findMovieByImdbId, getGenres } from "@/lib/tmdb";
-import { getAwardWinners } from "@/lib/wikidata";
+import { getAwardFilms, type AwardStatus } from "@/lib/wikidata";
 import type { MovieSummary } from "@/types/tmdb";
 
 // /awards に対応するページ。「受賞作品を探す」機能。
-// TMDbには受賞データが無いため、lib/wikidata.tsを使ってWikidataから受賞作品の
-// 一覧(タイトル・受賞年・IMDb ID)を取得し、IMDb IDをTMDbの映画データに変換して表示する。
+// TMDbには受賞データが無いため、lib/wikidata.tsを使ってWikidataから受賞/ノミネート作品の
+// 一覧(タイトル・年・IMDb ID)を取得し、IMDb IDをTMDbの映画データに変換して表示する。
 //
 // /mood や /gacha と同じく、クエリパラメータの有無で状態を出し分けている:
-//   ① award未指定 → 賞・年代を選ぶフォームを表示
-//   ② award指定あり → 受賞作品一覧を表示
+//   ① award未指定 → 映画祭/部門・受賞orノミネート・年代を選ぶフォームを表示
+//   ② award指定あり → 該当する作品一覧を表示
 
 interface AwardsPageProps {
   searchParams: Promise<{
-    award?: string; // lib/awards.tsのAwardOption.key
+    award?: string; // lib/awards.tsのAwardOption.key(例: "oscar-picture")
+    status?: string; // "winner" | "nominee"
     era?: string; // ERA_OPTIONSのvalue("開始年-終了年"形式)
   }>;
 }
 
 export default async function AwardsPage({ searchParams }: AwardsPageProps) {
-  const { award, era } = await searchParams;
+  const { award, status, era } = await searchParams;
   const awardOption = award ? getAwardOption(award) : undefined;
+  // statusはURLの文字列(string)として渡ってくるが、lib/wikidata.tsのgetAwardFilmsは
+  // "winner"か"nominee"のどちらかしか受け付けないので、不正な値なら"winner"にフォールバックする。
+  const awardStatus: AwardStatus = status === "nominee" ? "nominee" : "winner";
 
   // ① awardが未指定(または不正な値)の場合: 選択フォームだけを表示して終わり。
   if (!awardOption) {
@@ -30,7 +34,8 @@ export default async function AwardsPage({ searchParams }: AwardsPageProps) {
       <div className="flex flex-col gap-6">
         <h1 className="text-xl font-bold">🏆 受賞作品を探す</h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          アカデミー賞やカンヌ国際映画祭など、名だたる映画賞の受賞作品を探せます。
+          アカデミー賞・カンヌ国際映画祭・英国アカデミー賞など、名だたる映画賞の
+          受賞/ノミネート作品を、部門ごとに探せます。
         </p>
         <form
           action="/awards"
@@ -38,7 +43,9 @@ export default async function AwardsPage({ searchParams }: AwardsPageProps) {
           className="flex flex-col gap-4 rounded-lg border border-black/10 bg-white p-4 text-sm dark:border-white/10 dark:bg-zinc-900"
         >
           <label className="flex flex-col gap-1">
-            賞(必須)
+            映画祭/部門(必須)
+            {/* <optgroup>はHTML標準のタグで、JS無しで<select>の選択肢を
+                「アカデミー賞」「カンヌ国際映画祭」…とグループ分けして見やすくできる */}
             <select
               name="award"
               required
@@ -48,9 +55,28 @@ export default async function AwardsPage({ searchParams }: AwardsPageProps) {
               <option value="" disabled>
                 選んでください
               </option>
-              {AWARD_OPTIONS.map((a) => (
-                <option key={a.key} value={a.key}>
-                  {a.label}
+              {AWARD_SHOWS.map((show) => (
+                <optgroup key={show.showLabel} label={show.showLabel}>
+                  {show.categories.map((c) => (
+                    <option key={c.key} value={c.key}>
+                      {c.categoryLabel}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1">
+            種別
+            <select
+              name="status"
+              defaultValue="winner"
+              className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
+            >
+              {STATUS_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
                 </option>
               ))}
             </select>
@@ -82,31 +108,34 @@ export default async function AwardsPage({ searchParams }: AwardsPageProps) {
     );
   }
 
-  // ② ここから先はawardOptionが必ず存在する状態 = 実際に受賞作品を調べる処理。
+  // ② ここから先はawardOptionが必ず存在する状態 = 実際に作品を調べる処理。
 
-  const [winners, genres] = await Promise.all([
-    getAwardWinners(awardOption.wikidataId),
+  const [films, genres] = await Promise.all([
+    getAwardFilms(awardOption.wikidataId, awardStatus),
     getGenres(),
   ]);
 
-  // eraが指定されていれば "開始年-終了年" を分解して、その範囲内の受賞年だけに絞り込む
+  // eraが指定されていれば "開始年-終了年" を分解して、その範囲内の年だけに絞り込む。
+  // era未指定の場合は年でのフィルタをせず全件対象にする
+  // (Wikidata側で受賞年のデータが欠けている作品も、絞り込みをしていないなら除外しない)。
   const [eraMinStr, eraMaxStr] = era ? era.split("-") : [undefined, undefined];
   const eraMin = eraMinStr ? Number(eraMinStr) : undefined;
   const eraMax = eraMaxStr ? Number(eraMaxStr) : undefined;
-  const filteredWinners = winners.filter((w) => {
-    if (w.year === null) return false;
-    if (eraMin !== undefined && w.year < eraMin) return false;
-    if (eraMax !== undefined && w.year > eraMax) return false;
-    return true;
-  });
+  const filteredFilms =
+    eraMin === undefined && eraMax === undefined
+      ? films
+      : films.filter((f) => {
+          if (f.year === null) return false;
+          if (eraMin !== undefined && f.year < eraMin) return false;
+          if (eraMax !== undefined && f.year > eraMax) return false;
+          return true;
+        });
 
   // WikidataのIMDb IDを、1件ずつTMDbの映画データに変換する。
   // Promise.allで全部同時にリクエストすることで、1件ずつ順番に待つより大幅に速くなる。
-  // IMDb IDが無い(Wikidata側にデータが無い)受賞作品はTMDbで調べようが無いのでスキップする。
+  // IMDb IDが無い(Wikidata側にデータが無い)作品はTMDbで調べようが無いのでスキップする。
   const resolvedMovies = await Promise.all(
-    filteredWinners
-      .filter((w) => w.imdbId)
-      .map((w) => findMovieByImdbId(w.imdbId as string))
+    filteredFilms.filter((f) => f.imdbId).map((f) => findMovieByImdbId(f.imdbId as string))
   );
   // findMovieByImdbIdは見つからなかった場合nullを返すので、それを取り除く。
   // TypeScriptの型ガード(movie is MovieSummary)を書くことで、
@@ -115,15 +144,21 @@ export default async function AwardsPage({ searchParams }: AwardsPageProps) {
     (movie): movie is MovieSummary => movie !== null
   );
 
+  const statusLabel = awardStatus === "nominee" ? "ノミネート" : "受賞";
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="text-xl font-bold">🏆 {awardOption.label}</h1>
+        <h1 className="text-xl font-bold">
+          🏆 {awardOption.showLabel} {awardOption.categoryLabel}
+        </h1>
         <Link href="/awards" className="text-sm text-zinc-500 hover:underline">
           条件を選び直す
         </Link>
       </div>
-      <p className="text-sm text-zinc-500">{movies.length}作品</p>
+      <p className="text-sm text-zinc-500">
+        {statusLabel} {movies.length}作品
+      </p>
 
       <MovieGrid movies={movies} genres={genres} />
     </div>
