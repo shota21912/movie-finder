@@ -1,6 +1,8 @@
+import FormSelect from "@/components/FormSelect";
 import MovieGrid from "@/components/MovieGrid";
 import Pagination from "@/components/Pagination";
 import { SORT_OPTIONS } from "@/lib/sortOptions";
+import { BUTTON_CLASS } from "@/lib/styles";
 import { discoverMovies, getGenres } from "@/lib/tmdb";
 
 // フォルダ名の [id] は Next.js の「動的ルート(Dynamic Route)」という機能。
@@ -47,27 +49,16 @@ export default async function GenrePage({
         <form
           action={`/genre/${id}`}
           method="GET"
-          className="flex items-center gap-2 text-sm"
+          className="flex items-end gap-2 text-sm"
         >
           {name && <input type="hidden" name="name" value={name} />}
-          <label className="flex items-center gap-2">
-            並び替え
-            <select
-              name="sort"
-              defaultValue={sort ?? SORT_OPTIONS[0].value}
-              className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-            >
-              {SORT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="submit"
-            className="rounded bg-black px-3 py-1.5 text-white dark:bg-white dark:text-black"
-          >
+          <FormSelect
+            label="並び替え"
+            name="sort"
+            defaultValue={sort ?? SORT_OPTIONS[0].value}
+            options={SORT_OPTIONS}
+          />
+          <button type="submit" className={BUTTON_CLASS}>
             適用
           </button>
         </form>

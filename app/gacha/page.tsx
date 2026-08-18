@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import FormSelect from "@/components/FormSelect";
 import { getMoodOption, MOOD_OPTIONS } from "@/lib/moodMap";
 import { CURATED_PROVIDER_NAMES } from "@/lib/providers";
+import { BUTTON_FULL_CLASS, FORM_PANEL_CLASS } from "@/lib/styles";
 import {
   discoverMovies,
   getGenres,
@@ -40,66 +42,39 @@ export default async function GachaPage({ searchParams }: GachaPageProps) {
           サブスクを選んでガチャを回すと、条件に合う映画をランダムに1本引き当てます。
           ジャンル・気分は任意です(絞り込むほどガチャの母数は減ります)。
         </p>
-        <form
-          action="/gacha"
-          method="GET"
-          className="flex flex-col gap-4 rounded-lg border border-black/10 bg-white p-4 text-sm dark:border-white/10 dark:bg-zinc-900"
-        >
-          <label className="flex flex-col gap-1">
-            サブスク(必須)
-            <select
-              name="provider"
-              required
-              defaultValue=""
-              className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-            >
-              <option value="" disabled>
-                選んでください
-              </option>
-              {curatedProviders.map((p) => (
-                <option key={p.provider_id} value={p.provider_id}>
-                  {p.provider_name}
-                </option>
-              ))}
-            </select>
-          </label>
+        <form action="/gacha" method="GET" className={`flex flex-col gap-4 ${FORM_PANEL_CLASS}`}>
+          <FormSelect
+            label="サブスク(必須)"
+            name="provider"
+            required
+            defaultValue=""
+            placeholder="選んでください"
+            options={curatedProviders.map((p) => ({
+              value: String(p.provider_id),
+              label: p.provider_name,
+            }))}
+          />
 
-          <label className="flex flex-col gap-1">
-            気分(任意)
-            <select
-              name="mood"
-              defaultValue=""
-              className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-            >
-              <option value="">指定なし</option>
-              {MOOD_OPTIONS.map((m) => (
-                <option key={m.key} value={m.key}>
-                  {m.emoji} {m.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <FormSelect
+            label="気分(任意)"
+            name="mood"
+            defaultValue=""
+            placeholder="指定なし"
+            options={MOOD_OPTIONS.map((m) => ({
+              value: m.key,
+              label: `${m.emoji} ${m.label}`,
+            }))}
+          />
 
-          <label className="flex flex-col gap-1">
-            ジャンル(任意)
-            <select
-              name="genre"
-              defaultValue=""
-              className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-            >
-              <option value="">指定なし</option>
-              {genres.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <FormSelect
+            label="ジャンル(任意)"
+            name="genre"
+            defaultValue=""
+            placeholder="指定なし"
+            options={genres.map((g) => ({ value: String(g.id), label: g.name }))}
+          />
 
-          <button
-            type="submit"
-            className="rounded-full bg-black px-6 py-2 text-white dark:bg-white dark:text-black"
-          >
+          <button type="submit" className={BUTTON_FULL_CLASS}>
             🎰 ガチャを回す
           </button>
         </form>

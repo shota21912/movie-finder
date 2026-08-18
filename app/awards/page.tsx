@@ -1,6 +1,8 @@
 import Link from "next/link";
+import FormSelect from "@/components/FormSelect";
 import MovieGrid from "@/components/MovieGrid";
 import { AWARD_SHOWS, ERA_OPTIONS, getAwardOption, STATUS_OPTIONS } from "@/lib/awards";
+import { BUTTON_FULL_CLASS, FORM_PANEL_CLASS, SUBTLE_LINK_CLASS } from "@/lib/styles";
 import { findMovieByImdbId, getGenres } from "@/lib/tmdb";
 import { getAwardFilms, type AwardStatus } from "@/lib/wikidata";
 import type { MovieSummary } from "@/types/tmdb";
@@ -37,70 +39,27 @@ export default async function AwardsPage({ searchParams }: AwardsPageProps) {
           アカデミー賞・カンヌ国際映画祭・英国アカデミー賞など、名だたる映画賞の
           受賞/ノミネート作品を、部門ごとに探せます。
         </p>
-        <form
-          action="/awards"
-          method="GET"
-          className="flex flex-col gap-4 rounded-lg border border-black/10 bg-white p-4 text-sm dark:border-white/10 dark:bg-zinc-900"
-        >
-          <label className="flex flex-col gap-1">
-            映画祭/部門(必須)
-            {/* <optgroup>はHTML標準のタグで、JS無しで<select>の選択肢を
-                「アカデミー賞」「カンヌ国際映画祭」…とグループ分けして見やすくできる */}
-            <select
-              name="award"
-              required
-              defaultValue=""
-              className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-            >
-              <option value="" disabled>
-                選んでください
-              </option>
-              {AWARD_SHOWS.map((show) => (
-                <optgroup key={show.showLabel} label={show.showLabel}>
-                  {show.categories.map((c) => (
-                    <option key={c.key} value={c.key}>
-                      {c.categoryLabel}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </label>
+        <form action="/awards" method="GET" className={`flex flex-col gap-4 ${FORM_PANEL_CLASS}`}>
+          {/* <optgroup>はHTML標準のタグで、JS無しで<select>の選択肢を
+              「アカデミー賞」「カンヌ国際映画祭」…とグループ分けして見やすくできる。
+              FormSelectはoptionsの代わりにgroupsを渡すと、内部で<optgroup>にして描画してくれる。 */}
+          <FormSelect
+            label="映画祭/部門(必須)"
+            name="award"
+            required
+            defaultValue=""
+            placeholder="選んでください"
+            groups={AWARD_SHOWS.map((show) => ({
+              groupLabel: show.showLabel,
+              options: show.categories.map((c) => ({ value: c.key, label: c.categoryLabel })),
+            }))}
+          />
 
-          <label className="flex flex-col gap-1">
-            種別
-            <select
-              name="status"
-              defaultValue="winner"
-              className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-            >
-              {STATUS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <FormSelect label="種別" name="status" defaultValue="winner" options={STATUS_OPTIONS} />
 
-          <label className="flex flex-col gap-1">
-            年代(任意)
-            <select
-              name="era"
-              defaultValue=""
-              className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-            >
-              {ERA_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <FormSelect label="年代(任意)" name="era" defaultValue="" options={ERA_OPTIONS} />
 
-          <button
-            type="submit"
-            className="rounded-full bg-black px-6 py-2 text-white dark:bg-white dark:text-black"
-          >
+          <button type="submit" className={BUTTON_FULL_CLASS}>
             検索する
           </button>
         </form>
@@ -152,7 +111,7 @@ export default async function AwardsPage({ searchParams }: AwardsPageProps) {
         <h1 className="text-xl font-bold">
           🏆 {awardOption.showLabel} {awardOption.categoryLabel}
         </h1>
-        <Link href="/awards" className="text-sm text-zinc-500 hover:underline">
+        <Link href="/awards" className={SUBTLE_LINK_CLASS}>
           条件を選び直す
         </Link>
       </div>

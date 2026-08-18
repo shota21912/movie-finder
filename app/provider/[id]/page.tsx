@@ -1,7 +1,9 @@
+import FormSelect from "@/components/FormSelect";
 import MovieGrid from "@/components/MovieGrid";
 import Pagination from "@/components/Pagination";
 import { getMoodOption, MOOD_OPTIONS } from "@/lib/moodMap";
 import { SORT_OPTIONS } from "@/lib/sortOptions";
+import { BUTTON_CLASS, FORM_PANEL_CLASS } from "@/lib/styles";
 import { discoverMovies, getGenres } from "@/lib/tmdb";
 
 // /provider/{配信サービスID} に対応するページ(例: /provider/8 は Netflix)。
@@ -58,63 +60,39 @@ export default async function ProviderPage({
       <form
         action={`/provider/${id}`}
         method="GET"
-        className="flex flex-wrap items-end gap-4 rounded-lg border border-black/10 bg-white p-4 text-sm dark:border-white/10 dark:bg-zinc-900"
+        className={`flex flex-wrap items-end gap-4 ${FORM_PANEL_CLASS}`}
       >
         {/* nameは画面には表示しないが、フォーム送信後もサービス名の表示を保つために
             hidden inputとして一緒に送信している */}
         {name && <input type="hidden" name="name" value={name} />}
 
-        <label className="flex flex-col gap-1">
-          気分
-          <select
-            name="mood"
-            defaultValue={mood ?? ""}
-            className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-          >
-            <option value="">指定なし</option>
-            {MOOD_OPTIONS.map((m) => (
-              <option key={m.key} value={m.key}>
-                {m.emoji} {m.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FormSelect
+          label="気分"
+          name="mood"
+          defaultValue={mood ?? ""}
+          placeholder="指定なし"
+          options={MOOD_OPTIONS.map((m) => ({
+            value: m.key,
+            label: `${m.emoji} ${m.label}`,
+          }))}
+        />
 
-        <label className="flex flex-col gap-1">
-          ジャンル
-          <select
-            name="genre"
-            defaultValue={genre ?? ""}
-            className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-          >
-            <option value="">指定なし</option>
-            {genres.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FormSelect
+          label="ジャンル"
+          name="genre"
+          defaultValue={genre ?? ""}
+          placeholder="指定なし"
+          options={genres.map((g) => ({ value: String(g.id), label: g.name }))}
+        />
 
-        <label className="flex flex-col gap-1">
-          並び替え
-          <select
-            name="sort"
-            defaultValue={sort ?? SORT_OPTIONS[0].value}
-            className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FormSelect
+          label="並び替え"
+          name="sort"
+          defaultValue={sort ?? SORT_OPTIONS[0].value}
+          options={SORT_OPTIONS}
+        />
 
-        <button
-          type="submit"
-          className="rounded bg-black px-4 py-1.5 text-white dark:bg-white dark:text-black"
-        >
+        <button type="submit" className={BUTTON_CLASS}>
           絞り込む
         </button>
       </form>

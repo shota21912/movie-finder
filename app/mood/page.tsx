@@ -1,8 +1,10 @@
 import Link from "next/link";
+import FormSelect from "@/components/FormSelect";
 import MovieGrid from "@/components/MovieGrid";
 import Pagination from "@/components/Pagination";
 import { getMoodOption, MOOD_OPTIONS } from "@/lib/moodMap";
 import { SORT_OPTIONS } from "@/lib/sortOptions";
+import { BUTTON_CLASS, FORM_PANEL_CLASS, SUBTLE_LINK_CLASS } from "@/lib/styles";
 import { discoverMovies, getGenres } from "@/lib/tmdb";
 
 // /mood に対応するページ。このサイトの目玉機能「気分から探す」の本体。
@@ -94,7 +96,7 @@ export default async function MoodPage({ searchParams }: MoodPageProps) {
           {moodOption.emoji} {moodOption.label}
         </h1>
         {/* ?mood=無しの/moodに戻ることで、①の気分選択画面に戻れるようにしている */}
-        <Link href="/mood" className="text-sm text-zinc-500 hover:underline">
+        <Link href="/mood" className={SUBTLE_LINK_CLASS}>
           気分を選び直す
         </Link>
       </div>
@@ -105,75 +107,40 @@ export default async function MoodPage({ searchParams }: MoodPageProps) {
       <form
         action="/mood"
         method="GET"
-        className="flex flex-wrap items-end gap-4 rounded-lg border border-black/10 bg-white p-4 text-sm dark:border-white/10 dark:bg-zinc-900"
+        className={`flex flex-wrap items-end gap-4 ${FORM_PANEL_CLASS}`}
       >
         <input type="hidden" name="mood" value={moodOption.key} />
 
-        <label className="flex flex-col gap-1">
-          ジャンル
-          <select
-            name="genre"
-            defaultValue={genre ?? ""}
-            className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-          >
-            <option value="">おすすめ（{moodOption.label}に合うジャンル）</option>
-            {genres.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FormSelect
+          label="ジャンル"
+          name="genre"
+          defaultValue={genre ?? ""}
+          placeholder={`おすすめ（${moodOption.label}に合うジャンル）`}
+          options={genres.map((g) => ({ value: String(g.id), label: g.name }))}
+        />
 
-        <label className="flex flex-col gap-1">
-          上映時間
-          <select
-            name="runtime"
-            defaultValue={runtime ?? ""}
-            className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-          >
-            {RUNTIME_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FormSelect
+          label="上映時間"
+          name="runtime"
+          defaultValue={runtime ?? ""}
+          options={RUNTIME_OPTIONS}
+        />
 
-        <label className="flex flex-col gap-1">
-          公開年
-          <select
-            name="year"
-            defaultValue={year ?? ""}
-            className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-          >
-            {YEAR_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FormSelect
+          label="公開年"
+          name="year"
+          defaultValue={year ?? ""}
+          options={YEAR_OPTIONS}
+        />
 
-        <label className="flex flex-col gap-1">
-          並び替え
-          <select
-            name="sort"
-            defaultValue={sort ?? moodOption.sortBy ?? SORT_OPTIONS[0].value}
-            className="rounded border border-black/10 bg-white px-2 py-1 dark:border-white/20 dark:bg-zinc-800"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FormSelect
+          label="並び替え"
+          name="sort"
+          defaultValue={sort ?? moodOption.sortBy ?? SORT_OPTIONS[0].value}
+          options={SORT_OPTIONS}
+        />
 
-        <button
-          type="submit"
-          className="rounded bg-black px-4 py-1.5 text-white dark:bg-white dark:text-black"
-        >
+        <button type="submit" className={BUTTON_CLASS}>
           絞り込む
         </button>
       </form>
