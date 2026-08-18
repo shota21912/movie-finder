@@ -4,7 +4,13 @@ import MovieGrid from "@/components/MovieGrid";
 import MovieListButtons from "@/components/MovieListButtons";
 import ReviewCard from "@/components/ReviewCard";
 import { CURATED_PROVIDER_NAMES } from "@/lib/providers";
-import { getGenres, getMovieDetail, getMovieReviews, tmdbImageUrl } from "@/lib/tmdb";
+import {
+  getGenres,
+  getMovieDetail,
+  getMovieReviews,
+  getWatchProviders,
+  tmdbImageUrl,
+} from "@/lib/tmdb";
 import type { Video } from "@/types/tmdb";
 
 // /movie/{id} に対応する、映画1本ぶんの詳細ページ。
@@ -31,13 +37,14 @@ function pickTrailer(videos?: Video[]): Video | undefined {
 
 export default async function MoviePage({ params }: MoviePageProps) {
   const { id } = await params;
-  // 映画の詳細情報・ジャンル一覧・口コミ、の3つを同時に取得する。
+  // 映画の詳細情報・ジャンル一覧・口コミ・配信サービス一覧、の4つを同時に取得する。
   // getMovieReviewsだけ別のPromiseになっているのは、lib/tmdb.tsのコメントにある通り
   // language指定の都合でgetMovieDetailとは別リクエストにする必要があったため。
-  const [movie, genres, reviewsData] = await Promise.all([
+  const [movie, genres, reviewsData, providers] = await Promise.all([
     getMovieDetail(Number(id)),
     getGenres(),
     getMovieReviews(Number(id)),
+    getWatchProviders(), // 「視聴可能なサービス」のサービス名をリンク化するために provider_id が必要
   ]);
 
   const posterUrl = tmdbImageUrl(movie.poster_path, "w500");
@@ -54,6 +61,9 @@ export default async function MoviePage({ params }: MoviePageProps) {
   const flatrateNames = new Set(
     (jpProviders?.flatrate ?? []).map((p) => p.provider_name)
   );
+  // サービス名(文字列)からTMDbのprovider_id(数値)を引くための対応表。
+  // /provider/{id} へのリンクを組み立てるのに必要。
+  const providerIdByName = new Map(providers.map((p) => [p.provider_name, p.provider_id]));
   const trailer = pickTrailer(movie.videos?.results);
   const recommendations = movie.recommendations?.results ?? [];
   const reviews = reviewsData.results;
@@ -181,16 +191,30 @@ export default async function MoviePage({ params }: MoviePageProps) {
             <h2 className="mb-2 text-lg font-semibold">視聴可能なサービス</h2>
             <ul className="flex flex-col gap-1 text-sm">
               {/* 主要サービス名(CURATED_PROVIDER_NAMES)を1つずつ、
-                  「このサービスの見放題ラインナップに含まれているか」を○×で表示する */}
-              {CURATED_PROVIDER_NAMES.map((name) => (
-                <li
-                  key={name}
-                  className="flex items-center justify-between border-b border-black/5 py-1 dark:border-white/10"
-                >
-                  <span>{name}</span>
-                  <span>{flatrateNames.has(name) ? "○" : "×"}</span>
-                </li>
-              ))}
+                  「このサービスの見放題ラインナップに含まれているか」を○×で表示する。
+                  サービス名自体は、そのサービスの一覧ページ(/provider/[id])へのリンクにもなっている
+                  (○×どちらでも押せる。×の作品でも「他に何があるか」を見に行けるようにするため)。 */}
+              {CURATED_PROVIDER_NAMES.map((name) => {
+                const providerId = providerIdByName.get(name);
+                return (
+                  <li
+                    key={name}
+                    className="flex items-center justify-between border-b border-black/5 py-1 dark:border-white/10"
+                  >
+                    {providerId ? (
+                      <Link
+                        href={`/provider/${providerId}?name=${encodeURIComponent(name)}`}
+                        className="hover:underline"
+                      >
+                        {name}
+                      </Link>
+                    ) : (
+                      <span>{name}</span>
+                    )}
+                    <span>{flatrateNames.has(name) ? "○" : "×"}</span>
+                  </li>
+                );
+              })}
             </ul>
             {/* TMDb(JustWatch)には日本語字幕/吹き替えの有無というデータが無いため、
                 実際の配信ページに飛んで確認してもらうための外部リンクを用意している */}

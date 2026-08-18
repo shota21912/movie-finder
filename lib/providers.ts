@@ -10,5 +10,8 @@ export const CURATED_PROVIDER_NAMES = [
   "Disney Plus",
   "U-NEXT",
   "Hulu",
-  "Apple TV Plus",
+  // TMDb側の表記は "Apple TV Plus" ではなく "Apple TV"(provider_id: 350)。
+  // "Apple TV Plus"のまま書いていたためどこにも一致せず、Apple TV+が
+  // サイトのどこにも表示されていなかった不具合を修正した。
+  "Apple TV",
 ];
