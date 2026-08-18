@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import MovieGrid from "@/components/MovieGrid";
+import MovieListButtons from "@/components/MovieListButtons";
 import ReviewCard from "@/components/ReviewCard";
 import { CURATED_PROVIDER_NAMES } from "@/lib/providers";
 import { getGenres, getMovieDetail, getMovieReviews, tmdbImageUrl } from "@/lib/tmdb";
@@ -56,6 +57,19 @@ export default async function MoviePage({ params }: MoviePageProps) {
   const trailer = pickTrailer(movie.videos?.results);
   const recommendations = movie.recommendations?.results ?? [];
   const reviews = reviewsData.results;
+  // MovieListButtons(「後で見る」「観た映画」ボタン)に渡すためのMovieSummary。
+  // 注意: movieの型(MovieDetail)はgenre_idsではなくgenres(名前付きの配列)を持っているので、
+  // ここで明示的にIDだけを取り出して詰め替えている。movieをそのまま渡すと、
+  // 一覧ページでgenre_idsを読もうとした時にundefinedになってしまう。
+  const movieSummary = {
+    id: movie.id,
+    title: movie.title,
+    poster_path: movie.poster_path,
+    release_date: movie.release_date,
+    genre_ids: movie.genres.map((g) => g.id),
+    vote_average: movie.vote_average,
+    overview: movie.overview,
+  };
 
   return (
     <div className="flex flex-col gap-10">
@@ -100,6 +114,11 @@ export default async function MoviePage({ params }: MoviePageProps) {
               </Link>
             ))}
           </div>
+
+          {/* 「後で見る」「観た映画」の登録ボタン。localStorageに保存するだけの機能なので、
+              サーバー(Server Component)であるこのページ自体には状態を持たせず、
+              クライアントコンポーネントのMovieListButtonsに丸ごと処理を任せている */}
+          <MovieListButtons movie={movieSummary} />
 
           <section>
             <h2 className="mb-2 text-lg font-semibold">あらすじ</h2>
