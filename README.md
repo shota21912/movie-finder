@@ -92,6 +92,21 @@ types/          TMDbレスポンスの型定義
 
 ## クレジット
 
-This product uses the TMDB API but is not endorsed or certified by TMDB.
+<img src="public/tmdb-logo.svg" alt="The Movie Database" width="120" />
+
+This website uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.
+
+配信サービス(視聴可能なサービス)のデータは [JustWatch](https://www.justwatch.com/) の提供によるものです。
 
 受賞作品データの一部は [Wikidata](https://www.wikidata.org/) から取得しています。
+
+上記のクレジット表記は、サイト本体のフッター(全ページ共通)にも同じ内容を掲載しています([components/Footer.tsx](components/Footer.tsx))。
+
+## TMDB API利用規約への対応
+
+- **アトリビューション**: 上記の通り、TMDBロゴ + 指定文言をサイト全ページのフッターに掲載
+- **JustWatchのクレジット**: 配信サービスデータの提供元として明記
+- **6ヶ月キャッシュ制限**: TMDbから取得したデータをlocalStorageに長期保存しない設計にしている。
+  「後で見る/観た映画」リスト([lib/movieList.ts](lib/movieList.ts))は映画IDのみを保存し、
+  タイトル・ポスターなどは表示のたびに [app/api/movies/route.ts](app/api/movies/route.ts) 経由で
+  TMDbから毎回取得し直している(サーバー側のNext.jsキャッシュも1時間程度で、6ヶ月には遠く及ばない)

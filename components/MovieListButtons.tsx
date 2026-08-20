@@ -27,7 +27,7 @@ export default function MovieListButtons({ movie }: { movie: MovieSummary }) {
       <button
         type="button"
         onClick={() =>
-          inWatchlist ? watchlist.remove(movie.id) : watchlist.add(movie)
+          inWatchlist ? watchlist.remove(movie.id) : watchlist.add(movie.id)
         }
         className={
           inWatchlist
@@ -39,7 +39,7 @@ export default function MovieListButtons({ movie }: { movie: MovieSummary }) {
       </button>
       <button
         type="button"
-        onClick={() => (isWatched ? watched.remove(movie.id) : watched.add(movie))}
+        onClick={() => (isWatched ? watched.remove(movie.id) : watched.add(movie.id))}
         className={
           isWatched
             ? "rounded-full bg-black px-4 py-1.5 text-sm text-white dark:bg-white dark:text-black"

@@ -231,6 +231,34 @@ export async function getMovieReviews(
   });
 }
 
+// マイリスト機能(observed/watchlist)用: 複数の映画IDから、それぞれの概要情報(MovieSummary)を
+// まとめて取得する。localStorageにはTMDb由来のデータ(タイトル・ポスターなど)を保存せず
+// 映画IDだけを保存しているので(lib/movieList.tsのコメント参照。TMDb API利用規約の
+// 「取得したデータを6ヶ月以上キャッシュしない」という制限を守るため)、マイリストを表示する
+// 直前にこの関数で毎回TMDbから最新のデータを取り直している。
+export async function getMovieSummaries(ids: number[]): Promise<MovieSummary[]> {
+  const results = await Promise.all(
+    ids.map(async (id): Promise<MovieSummary | null> => {
+      try {
+        const movie = await tmdbFetch<MovieDetail>(`/movie/${id}`);
+        return {
+          id: movie.id,
+          title: movie.title,
+          poster_path: movie.poster_path,
+          release_date: movie.release_date,
+          genre_ids: movie.genres.map((g) => g.id),
+          vote_average: movie.vote_average,
+          overview: movie.overview,
+        };
+      } catch {
+        // 削除済み・存在しないIDなど、取得に失敗した映画は一覧から静かに除外する
+        return null;
+      }
+    })
+  );
+  return results.filter((m): m is MovieSummary => m !== null);
+}
+
 // 俳優のプロフィール(生年月日、経歴など)を取得する。
 export async function getPersonDetail(id: number): Promise<PersonDetail> {
   return tmdbFetch<PersonDetail>(`/person/${id}`);
